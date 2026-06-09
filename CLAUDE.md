@@ -128,4 +128,4 @@ Hello world greeting rendered; no features specced.
 
 ## Self-improvement log
 
-_(populated after each retrospective)_
+- [001-hello-world](docs/retrospectives/001-hello-world.md) — bootstrap retro; nc shim on Windows, eslint-plugin-react ESLint 10 incompatibility recorded._
