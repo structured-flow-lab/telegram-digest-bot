@@ -1,0 +1,14 @@
+{
+  "name": "telegram-digest-bot",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix app run dev",
+    "build": "npm --prefix app run build",
+    "preview": "npm --prefix app run preview",
+    "test": "npm --prefix app run test",
+    "test:run": "npm --prefix app run test:run",
+    "lint": "npm --prefix app run lint",
+    "format": "npm --prefix app run format",
+    "setup": "npm install --prefix app"
+  }
+}

@@ -1,0 +1,34 @@
+# dependencies
+node_modules/
+
+# build outputs
+dist/
+dist-ssr/
+*.local
+
+# env
+.env
+.env.local
+.env.*.local
+
+# editor / OS
+.DS_Store
+.vscode/
+.idea/
+*.swp
+
+# logs
+*.log
+
+# pid files
+*.pid
+
+# bootstrap port state (session-local, set by Step 6)
+.dev-port
+.preview-port
+
+# sed backups
+*.bak
+
+# tests / coverage
+coverage/
