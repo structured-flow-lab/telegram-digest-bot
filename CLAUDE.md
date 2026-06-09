@@ -113,8 +113,14 @@ output, then write the minimum code to turn it green, then commit.
 
 ## Docs index
 
+- [docs/PRD.md](docs/PRD.md)
+- [docs/implementation-plan.md](docs/implementation-plan.md)
 - [docs/requirements/overview.md](docs/requirements/overview.md)
-- [docs/decisions/001-agent-structure.md](docs/decisions/001-agent-structure.md)
+- [docs/decisions/001-agent-structure.md](docs/decisions/001-agent-structure.md) — root vs app/ layout
+- [docs/decisions/002-llm-abstraction.md](docs/decisions/002-llm-abstraction.md) — Protocol + factory
+- [docs/decisions/003-sqlite-storage.md](docs/decisions/003-sqlite-storage.md) — SQLite для Personal MVP
+- [docs/decisions/004-telethon-channel-reader.md](docs/decisions/004-telethon-channel-reader.md) — Telethon vs Bot API
+- [docs/decisions/005-bot-framework-and-hosting.md](docs/decisions/005-bot-framework-and-hosting.md) — python-telegram-bot + Railway
 - [docs/constraints.md](docs/constraints.md)
 - [docs/retrospectives/](docs/retrospectives/) ← populated after each feature
 
