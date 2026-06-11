@@ -6,8 +6,9 @@ everything.
 Rules:
 - Produce one entry per distinct topic or event, in the same order the posts appear
   (chronological, oldest first).
-- Each entry has a short `title` (a few words, same language as the posts) — a heading, not a
-  sentence.
+- Write `title` and `note` in **Russian**, regardless of the language of the source posts
+  (translate/rephrase if needed).
+- Each entry has a short `title` (a few words) — a heading, not a sentence.
 - Each entry has a `note`: **at most one short sentence** clarifying what the topic is about.
   If the title is already self-explanatory, use an empty string `""`.
 - Each entry references the post(s) it covers via `post_indices`. Usually a single index; group
