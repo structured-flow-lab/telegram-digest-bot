@@ -94,16 +94,16 @@ for a single channel.
 
 ### Formatter (app/digest/formatter.py)
 
-- AC-050: `def format_digest(result: DigestResult, header: DigestHeader) -> str`
-  returns an HTML-formatted message (matches `ParseMode.HTML` used elsewhere
-  in `app/bot/handlers.py`): header (channels included, posts fetched, posts
-  included) followed by each cluster as `<b>Title</b>\nsummary\n` + linked
-  post references (`<a href="...">N</a>`).
-- AC-051: If `result.clusters` is empty, returns a "nothing to summarise"
-  message (no clusters block).
-- AC-052: Output respects Telegram's 4096-character message limit — if
-  exceeded, split into multiple messages at cluster boundaries (handler sends
-  each as a separate `reply_text`).
+- AC-050: `def format_digest(result: DigestResult, header: DigestHeader) -> list[str]`
+  returns one or more HTML-formatted messages (matches `ParseMode.HTML` used
+  elsewhere in `app/bot/handlers.py`): header (channels included, posts
+  fetched, posts included) followed by each cluster as `<b>Title</b>\nsummary\n`
+  + linked post references (`<a href="...">N</a>`).
+- AC-051: If `result.clusters` is empty, returns a single "nothing to
+  summarise" message (header + notice, no clusters block).
+- AC-052: Each returned message respects Telegram's 4096-character limit —
+  clusters that would overflow the current message start a new one (handler
+  sends each list item as a separate `reply_text`).
 
 ### Repositories (app/storage/repositories.py)
 
