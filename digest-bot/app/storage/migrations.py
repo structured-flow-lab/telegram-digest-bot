@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 _CREATE_CHANNELS = """
 CREATE TABLE IF NOT EXISTS channels (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    username    TEXT    NOT NULL UNIQUE,   -- e.g. "vc_ru" (without @)
+    username    TEXT    NOT NULL UNIQUE,   -- e.g. "bbcrussian" (without @)
     title       TEXT,
     added_at    TEXT    NOT NULL DEFAULT (datetime('now')),
     is_active   INTEGER NOT NULL DEFAULT 1
