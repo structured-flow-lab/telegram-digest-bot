@@ -1,6 +1,5 @@
 """Entry point — initialise and run the bot."""
 
-import asyncio
 import logging
 import os
 import sys
@@ -29,20 +28,18 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-async def _init_db() -> None:
+async def _init_db(application: Application) -> None:
     """Run migrations before the bot starts accepting updates."""
     async with get_connection() as conn:
         await run_migrations(conn)
+    logger.info("Database ready")
 
 
 def main() -> None:
-    # Run DB migrations synchronously before the event loop starts.
-    asyncio.run(_init_db())
-    logger.info("Database ready")
-
     application = (
         Application.builder()
         .token(config.TELEGRAM_BOT_TOKEN)
+        .post_init(_init_db)
         .build()
     )
 
