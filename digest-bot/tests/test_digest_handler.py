@@ -21,6 +21,7 @@ def _make_update(args: list[str], user_id: int = 999):
     update.effective_user.id = user_id
     update.message = MagicMock()
     update.message.reply_text = AsyncMock()
+    update.message.set_reaction = AsyncMock()
     return update
 
 
@@ -157,7 +158,8 @@ async def test_valid_request_acknowledges_and_starts_task(handlers, conn):
     with patch.object(handlers.asyncio, "create_task") as mock_create_task:
         await handlers.digest_handler(update, _make_context(["7"]))
 
-    update.message.reply_text.assert_awaited_once_with(handlers.messages.DIGEST_STARTED)
+    update.message.set_reaction.assert_awaited_once_with(handlers.ReactionEmoji.THUMBS_UP)
+    update.message.reply_text.assert_not_awaited()
     mock_create_task.assert_called_once()
     mock_create_task.call_args.args[0].close()
 

@@ -6,7 +6,7 @@ import re
 from datetime import datetime, timedelta, timezone
 
 from telegram import Update
-from telegram.constants import ParseMode
+from telegram.constants import ParseMode, ReactionEmoji
 from telegram.ext import ContextTypes
 
 from app import config
@@ -224,7 +224,7 @@ async def digest_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await update.message.reply_text(messages.CHANNELS_EMPTY)
         return
 
-    await update.message.reply_text(messages.DIGEST_STARTED)
+    await update.message.set_reaction(ReactionEmoji.THUMBS_UP)
     asyncio.create_task(_run_digest(update, channels, days, channel_username))
 
 
