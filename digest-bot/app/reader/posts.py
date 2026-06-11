@@ -50,8 +50,10 @@ async def validate_channel(username: str, client) -> ChannelInfo:
 async def fetch_posts(username: str, since: datetime, limit: int, client) -> list[Post]:
     posts: list[Post] = []
     try:
-        async for msg in client.iter_messages(username, offset_date=since, limit=limit):
+        async for msg in client.iter_messages(username, offset_date=since, reverse=True, limit=limit):
             if not msg.message:
+                continue
+            if msg.date < since:
                 continue
             posts.append(
                 Post(
