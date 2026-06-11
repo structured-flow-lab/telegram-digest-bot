@@ -50,3 +50,13 @@ CHANNEL_NOT_FOUND_ON_TELEGRAM = (
 CHANNEL_NOT_PUBLIC = (
     "🔒 Канал @{username} не является публичным каналом и не может быть добавлен."
 )
+
+# --- Digest ---
+
+DIGEST_USAGE = (
+    "⚠️ Использование: /digest &lt;дней&gt; или /digest @channel &lt;дней&gt;."
+)
+
+DIGEST_INVALID_DAYS = "⚠️ Число дней должно быть от 1 до {max_days}."
+
+DIGEST_STARTED = "⏳ Формирую дайджест..."

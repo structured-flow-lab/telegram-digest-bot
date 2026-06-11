@@ -14,6 +14,7 @@ from app import config
 from app.bot.handlers import (
     add_handler,
     channels_handler,
+    digest_handler,
     help_handler,
     remove_handler,
     start_handler,
@@ -48,6 +49,7 @@ def main() -> None:
     application.add_handler(CommandHandler("add", add_handler))
     application.add_handler(CommandHandler("remove", remove_handler))
     application.add_handler(CommandHandler("channels", channels_handler))
+    application.add_handler(CommandHandler("digest", digest_handler))
 
     logger.info("Starting bot in polling mode (owner_id=%d)", config.OWNER_TELEGRAM_ID)
     # Drop updates queued while the bot was offline rather than replaying them on restart.
