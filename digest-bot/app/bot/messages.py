@@ -58,5 +58,3 @@ DIGEST_USAGE = (
 )
 
 DIGEST_INVALID_DAYS = "⚠️ Число дней должно быть от 1 до {max_days}."
-
-DIGEST_STARTED = "⏳ Формирую дайджест..."

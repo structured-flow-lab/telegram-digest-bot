@@ -6,15 +6,15 @@ import re
 from datetime import datetime, timedelta, timezone
 
 from telegram import Update
-from telegram.constants import ParseMode
+from telegram.constants import ParseMode, ReactionEmoji
 from telegram.ext import ContextTypes
 
 from app import config
 from app.bot import messages
 from app.digest.collector import collect_posts
 from app.digest.filter import filter_posts
-from app.digest.formatter import DigestHeader, format_digest
-from app.digest.summarizer import PROMPT_VERSION, summarize
+from app.digest.formatter import ChannelDigestMeta, format_channel_digest
+from app.digest.summarizer import DigestResult, summarize
 from app.llm.factory import get_llm_client
 from app.reader import posts
 from app.reader.posts import ChannelInfo, ChannelNotFound, ChannelNotPublic
@@ -224,7 +224,7 @@ async def digest_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await update.message.reply_text(messages.CHANNELS_EMPTY)
         return
 
-    await update.message.reply_text(messages.DIGEST_STARTED)
+    await update.message.set_reaction(ReactionEmoji.THUMBS_UP)
     asyncio.create_task(_run_digest(update, channels, days, channel_username))
 
 
@@ -243,38 +243,56 @@ async def _run_digest(
             cache_repo = PostsCacheRepo(conn)
             client = get_client()
             await ensure_connected(client)
-
-            collected = await collect_posts(channels, since, cache_repo, client)
-            filtered = filter_posts(collected.posts)
-
             llm = get_llm_client()
-            digest_result = await summarize(filtered, llm)
 
-            header = DigestHeader(
-                channels=[c.username for c in channels],
-                posts_fetched=len(collected.posts),
-                posts_included=len(filtered),
-                failed_channels=collected.failed_channels,
-            )
-            for message_text in format_digest(digest_result, header):
-                await update.message.reply_text(
-                    message_text,
-                    parse_mode=ParseMode.HTML,
-                    disable_web_page_preview=True,
-                )
+            total_fetched = 0
+            total_included = 0
+
+            for channel in channels:
+                collected = await collect_posts([channel], since, cache_repo, client)
+                filtered = filter_posts(collected.posts)
+                total_fetched += len(collected.posts)
+                total_included += len(filtered)
+
+                if collected.failed_channels:
+                    digest_result = DigestResult(items=[], llm_result=None, prompt_version="")
+                    meta = ChannelDigestMeta(
+                        days=days,
+                        posts_fetched=len(collected.posts),
+                        posts_included=0,
+                        error="не удалось получить посты канала",
+                    )
+                elif not filtered:
+                    digest_result = DigestResult(items=[], llm_result=None, prompt_version="")
+                    meta = ChannelDigestMeta(
+                        days=days, posts_fetched=len(collected.posts), posts_included=0
+                    )
+                else:
+                    digest_result = await summarize(filtered, llm)
+                    meta = ChannelDigestMeta(
+                        days=days, posts_fetched=len(collected.posts), posts_included=len(filtered)
+                    )
+
+                for message_text in format_channel_digest(channel.username, digest_result, meta):
+                    await update.message.reply_text(
+                        message_text,
+                        parse_mode=ParseMode.HTML,
+                        disable_web_page_preview=True,
+                    )
+
+                if digest_result.llm_result is not None:
+                    await LLMUsageRepo(conn).record(
+                        digest_run_id=run_id,
+                        provider=config.LLM_PROVIDER,
+                        model=digest_result.llm_result.model,
+                        prompt_version=digest_result.prompt_version,
+                        input_tokens=digest_result.llm_result.input_tokens,
+                        output_tokens=digest_result.llm_result.output_tokens,
+                    )
 
             await run_repo.complete(
-                run_id, posts_fetched=len(collected.posts), posts_included=len(filtered)
+                run_id, posts_fetched=total_fetched, posts_included=total_included
             )
-            if digest_result.llm_result is not None:
-                await LLMUsageRepo(conn).record(
-                    digest_run_id=run_id,
-                    provider=config.LLM_PROVIDER,
-                    model=digest_result.llm_result.model,
-                    prompt_version=PROMPT_VERSION,
-                    input_tokens=digest_result.llm_result.input_tokens,
-                    output_tokens=digest_result.llm_result.output_tokens,
-                )
         except Exception as exc:
             logger.exception("Digest run %d failed", run_id)
             await run_repo.fail(run_id, str(exc))

@@ -141,9 +141,13 @@ output, then write the minimum code to turn it green, then commit.
 Phases 0–3 of the `digest-bot/` Python bot are done: env-based config, async SQLite migrations,
 owner-only access guard, `/start /help /add /remove /channels`, Telethon channel reader + posts
 cache, and the full digest pipeline (`app/llm/`, `app/digest/`, `app/prompts/digest_v1.md`,
-`DigestRunRepo`/`LLMUsageRepo`) wired into `/digest <days>` and `/digest @channel <days>`.
-89/91 tests passing (2 pre-existing `test_config.py` failures, see retro 003). Bot runs locally
-via `python app/main.py` (Telethon session requires one-time `scripts/telethon_login.py`).
+`app/prompts/digest_v2.md`, `DigestRunRepo`/`LLMUsageRepo`) wired into `/digest <days>` and
+`/digest @channel <days>`. Per feature 005, `/digest` now sends one table-of-contents-style
+message per channel (linked item titles + optional notes, forced Russian output, via
+`digest_v2.md`/`DigestItem`/`format_channel_digest`), reports per-channel fetch errors inline
+without aborting the run, and acknowledges the command with a 👍 reaction instead of a status
+message. 97/99 tests passing (2 pre-existing `test_config.py` failures, see retro 003). Bot runs
+locally via `python app/main.py` (Telethon session requires one-time `scripts/telethon_login.py`).
 Remaining: Phase 4 polish/deploy (logging table, webhook mode, Dockerfile, Railway). The root
 `app/` Vite/React bootstrap from feature 001 still exists but is not the active product.
 
@@ -154,3 +158,4 @@ Remaining: Phase 4 polish/deploy (logging table, webhook mode, Dockerfile, Railw
 - [001-hello-world](docs/retrospectives/001-hello-world.md) — bootstrap retro; nc shim on Windows, eslint-plugin-react ESLint 10 incompatibility recorded.
 - [002-channel-management-and-reader](docs/retrospectives/002-channel-management-and-reader.md) — PR description must say upfront if it bundles spec+test+implementation (don't claim "tests only"); mocked `iter_messages` hid an `offset_date`/`reverse` bug.
 - [003-digest-pipeline](docs/retrospectives/003-digest-pipeline.md) — `asyncio.run()` before `run_polling()` breaks on Python 3.12, use `post_init`; Telethon first-run login needs a manual interactive script; existing `.env` broke 2 `test_config.py` env-deletion tests (follow-up needed).
+- [005-digest-toc-per-channel](docs/retrospectives/005-digest-toc-per-channel.md) — when a prompt asks the LLM for "1+ items", the formatter must still handle an empty list gracefully (don't assume the prompt constraint is enforced); `_format_item` was indexing `urls[0]` unguarded and could crash the whole `/digest` run.
