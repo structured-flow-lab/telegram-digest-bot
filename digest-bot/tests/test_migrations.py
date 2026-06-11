@@ -63,6 +63,14 @@ async def test_creates_llm_usage_table(db):
     }.issubset(cols)
 
 
+async def test_creates_errors_table(db):
+    """AC-200."""
+    await run_migrations(db)
+    assert "errors" in await _tables(db)
+    cols = await _columns(db, "errors")
+    assert {"id", "occurred_at", "scope", "message"}.issubset(cols)
+
+
 async def test_migrations_idempotent(db):
     """AC-014: running migrations twice does not raise."""
     await run_migrations(db)

@@ -26,6 +26,7 @@ from app.storage.repositories import (
     ChannelLimitReached,
     ChannelRepo,
     DigestRunRepo,
+    ErrorRepo,
     LLMUsageRepo,
     PostsCacheRepo,
 )
@@ -124,8 +125,10 @@ async def add_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             messages.CHANNEL_LIMIT_REACHED.format(limit=config.MAX_CHANNELS)
         )
         return
-    except Exception:
+    except Exception as exc:
         logger.exception("Failed to add channel %r", username)
+        async with db.get_connection() as conn:
+            await ErrorRepo(conn).log("add_channel", str(exc))
         await update.message.reply_text(messages.GENERIC_ERROR)
         return
 
@@ -148,8 +151,10 @@ async def remove_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     try:
         async with db.get_connection() as conn:
             removed = await ChannelRepo(conn).remove(username)
-    except Exception:
+    except Exception as exc:
         logger.exception("Failed to remove channel %r", username)
+        async with db.get_connection() as conn:
+            await ErrorRepo(conn).log("remove_channel", str(exc))
         await update.message.reply_text(messages.GENERIC_ERROR)
         return
 
@@ -168,8 +173,10 @@ async def channels_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     try:
         async with db.get_connection() as conn:
             channels = await ChannelRepo(conn).list_active()
-    except Exception:
+    except Exception as exc:
         logger.exception("Failed to list channels")
+        async with db.get_connection() as conn:
+            await ErrorRepo(conn).log("list_channels", str(exc))
         await update.message.reply_text(messages.GENERIC_ERROR)
         return
 
@@ -296,4 +303,5 @@ async def _run_digest(
         except Exception as exc:
             logger.exception("Digest run %d failed", run_id)
             await run_repo.fail(run_id, str(exc))
+            await ErrorRepo(conn).log("digest_run", str(exc))
             await update.message.reply_text(messages.GENERIC_ERROR)

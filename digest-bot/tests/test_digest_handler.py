@@ -283,4 +283,8 @@ async def test_run_digest_failure_marks_run_as_error(handlers, conn, pipeline_mo
     assert rows[0]["status"] == "error"
     assert rows[0]["error_msg"] == "boom"
 
+    error_rows = await conn.execute_fetchall("SELECT * FROM errors")
+    assert error_rows[0]["scope"] == "digest_run"
+    assert error_rows[0]["message"] == "boom"
+
     update.message.reply_text.assert_awaited_with(handlers.messages.GENERIC_ERROR)

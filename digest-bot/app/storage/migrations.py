@@ -56,11 +56,21 @@ CREATE TABLE IF NOT EXISTS llm_usage (
 );
 """
 
+_CREATE_ERRORS = """
+CREATE TABLE IF NOT EXISTS errors (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    occurred_at TEXT    NOT NULL DEFAULT (datetime('now')),
+    scope       TEXT    NOT NULL,
+    message     TEXT    NOT NULL
+);
+"""
+
 _MIGRATIONS = [
     _CREATE_CHANNELS,
     _CREATE_POSTS_CACHE,
     _CREATE_DIGEST_RUNS,
     _CREATE_LLM_USAGE,
+    _CREATE_ERRORS,
 ]
 
 

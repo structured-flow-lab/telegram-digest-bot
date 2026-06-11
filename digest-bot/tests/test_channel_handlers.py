@@ -231,7 +231,7 @@ async def test_handlers_respect_owner_guard(handlers, handler_name, args):
 # Generic error handling (AC-019)
 # ---------------------------------------------------------------------------
 
-async def test_add_unexpected_exception_is_caught(handlers, monkeypatch):
+async def test_add_unexpected_exception_is_caught(handlers, conn, monkeypatch):
     """AC-019: unexpected exception -> GENERIC_ERROR, bot does not crash."""
     from app.storage.repositories import ChannelRepo
 
@@ -244,6 +244,10 @@ async def test_add_unexpected_exception_is_caught(handlers, monkeypatch):
     await handlers.add_handler(update, _make_context(["@bbcrussian"]))
 
     update.message.reply_text.assert_awaited_once_with(handlers.messages.GENERIC_ERROR)
+
+    error_rows = await conn.execute_fetchall("SELECT * FROM errors")
+    assert error_rows[0]["scope"] == "add_channel"
+    assert error_rows[0]["message"] == "boom"
 
 
 # ---------------------------------------------------------------------------

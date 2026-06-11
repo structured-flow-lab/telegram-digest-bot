@@ -217,3 +217,17 @@ class LLMUsageRepo:
             (digest_run_id, provider, model, prompt_version, input_tokens, output_tokens),
         )
         await self._conn.commit()
+
+
+class ErrorRepo:
+    """Repository for the `errors` table."""
+
+    def __init__(self, conn: aiosqlite.Connection) -> None:
+        self._conn = conn
+
+    async def log(self, scope: str, message: str) -> None:
+        await self._conn.execute(
+            "INSERT INTO errors (scope, message) VALUES (?, ?)",
+            (scope, message),
+        )
+        await self._conn.commit()
