@@ -29,16 +29,34 @@ def _make_context(args: list[str]):
     return context
 
 
+def _reset_handlers_module():
+    """Drop cached `app.config` / `app.bot.handlers` so the next import is fresh.
+
+    Popping from sys.modules alone is not enough: `app.bot` keeps a `handlers`
+    attribute pointing at the old module object, so `from app.bot import handlers`
+    would silently resolve to the stale module via attribute lookup while
+    `unittest.mock.patch("app.bot.handlers...")` re-imports a *different* fresh
+    module object — leaving the two out of sync.
+    """
+    import app
+    import app.bot as appbot
+
+    sys.modules.pop("app.config", None)
+    sys.modules.pop("app.bot.handlers", None)
+    if hasattr(app, "config"):
+        delattr(app, "config")
+    if hasattr(appbot, "handlers"):
+        delattr(appbot, "handlers")
+
+
 @pytest.fixture(autouse=True)
 def ensure_config(monkeypatch):
     """Minimal valid env so app.config / app.bot.handlers import cleanly."""
     monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "fake:token")
     monkeypatch.setenv("OWNER_TELEGRAM_ID", "999")
-    sys.modules.pop("app.config", None)
-    sys.modules.pop("app.bot.handlers", None)
+    _reset_handlers_module()
     yield
-    sys.modules.pop("app.config", None)
-    sys.modules.pop("app.bot.handlers", None)
+    _reset_handlers_module()
 
 
 @pytest.fixture
@@ -52,12 +70,18 @@ async def conn():
 @pytest.fixture
 def handlers(conn, monkeypatch):
     from app.bot import handlers as h
+    from app.reader.posts import ChannelInfo
 
     @asynccontextmanager
     async def fake_get_connection():
         yield conn
 
     monkeypatch.setattr(h.db, "get_connection", fake_get_connection)
+
+    async def default_validate_channel(username):
+        return ChannelInfo(username=username, title=username, is_public=True)
+
+    monkeypatch.setattr(h, "validate_channel", default_validate_channel)
     return h
 
 

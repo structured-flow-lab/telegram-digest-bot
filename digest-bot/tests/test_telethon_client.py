@@ -6,23 +6,41 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 
+def _reset_telethon_client_module():
+    """Drop cached `app.config` / `app.reader.telethon_client` so the next import is fresh.
+
+    Popping from sys.modules alone is not enough: `app.reader` keeps a
+    `telethon_client` attribute pointing at the old module object, so
+    `from app.reader import telethon_client` would silently resolve to the
+    stale module via attribute lookup instead of re-importing — which matters
+    here because the stale module already has `telethon.TelegramClient` bound
+    from before `telethon.TelegramClient` gets patched.
+    """
+    import app
+    import app.reader as appreader
+
+    sys.modules.pop("app.config", None)
+    sys.modules.pop("app.reader.telethon_client", None)
+    if hasattr(app, "config"):
+        delattr(app, "config")
+    if hasattr(appreader, "telethon_client"):
+        delattr(appreader, "telethon_client")
+
+
 @pytest.fixture(autouse=True)
 def ensure_config(monkeypatch):
     monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "fake:token")
     monkeypatch.setenv("OWNER_TELEGRAM_ID", "999")
-    sys.modules.pop("app.config", None)
-    sys.modules.pop("app.reader.telethon_client", None)
+    _reset_telethon_client_module()
     yield
-    sys.modules.pop("app.config", None)
-    sys.modules.pop("app.reader.telethon_client", None)
+    _reset_telethon_client_module()
 
 
 async def test_get_client_returns_singleton(monkeypatch):
     """AC-001: get_client() returns a singleton TelegramClient with session in data/."""
     monkeypatch.setenv("TELEGRAM_API_ID", "12345")
     monkeypatch.setenv("TELEGRAM_API_HASH", "abc123")
-    sys.modules.pop("app.config", None)
-    sys.modules.pop("app.reader.telethon_client", None)
+    _reset_telethon_client_module()
 
     fake_client = MagicMock()
     with patch("telethon.TelegramClient", return_value=fake_client) as mock_cls:
@@ -43,8 +61,7 @@ async def test_get_client_raises_without_api_credentials(monkeypatch):
     """AC-002: raises RuntimeError if TELEGRAM_API_ID / TELEGRAM_API_HASH unset."""
     monkeypatch.delenv("TELEGRAM_API_ID", raising=False)
     monkeypatch.delenv("TELEGRAM_API_HASH", raising=False)
-    sys.modules.pop("app.config", None)
-    sys.modules.pop("app.reader.telethon_client", None)
+    _reset_telethon_client_module()
 
     from app.reader import telethon_client
 
@@ -54,7 +71,7 @@ async def test_get_client_raises_without_api_credentials(monkeypatch):
 
 async def test_ensure_connected_is_idempotent():
     """AC-003: ensure_connected() connects lazily and is safe to call repeatedly."""
-    sys.modules.pop("app.reader.telethon_client", None)
+    _reset_telethon_client_module()
     from app.reader import telethon_client
 
     client = MagicMock()
