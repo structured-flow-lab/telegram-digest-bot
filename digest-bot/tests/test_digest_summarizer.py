@@ -65,6 +65,19 @@ async def test_parses_valid_json_response_into_clusters():
     assert result.llm_result.model == "claude-haiku-4-5"
 
 
+async def test_parses_json_wrapped_in_markdown_code_fence():
+    posts = [_post(1)]
+    response = "```json\n" + json.dumps(
+        {"clusters": [{"title": "Theme A", "summary": "Summary A", "post_indices": [0]}]}
+    ) + "\n```"
+    llm = _llm_returning(response)
+
+    result = await summarize(posts, llm)
+
+    assert len(result.clusters) == 1
+    assert result.clusters[0].title == "Theme A"
+
+
 async def test_invalid_json_raises_summarizer_error():
     posts = [_post(1)]
     llm = _llm_returning("not json")

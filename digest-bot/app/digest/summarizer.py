@@ -1,6 +1,7 @@
 """Call the LLM to cluster + summarise posts into a digest."""
 
 import json
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -9,6 +10,13 @@ from app.storage.repositories import CachedPost
 
 PROMPT_PATH = Path(__file__).resolve().parent.parent / "prompts" / "digest_v1.md"
 PROMPT_VERSION = "digest_v1"
+
+_CODE_FENCE_RE = re.compile(r"^```(?:json)?\s*\n(.*)\n```\s*$", re.DOTALL)
+
+
+def _strip_code_fence(text: str) -> str:
+    match = _CODE_FENCE_RE.match(text.strip())
+    return match.group(1) if match else text
 
 
 class SummarizerError(Exception):
@@ -44,7 +52,7 @@ async def summarize(posts: list[CachedPost], llm: LLMClient) -> DigestResult:
     result = await llm.complete(prompt=prompt, context=context)
 
     try:
-        data = json.loads(result.text)
+        data = json.loads(_strip_code_fence(result.text))
         clusters = [
             DigestCluster(
                 title=cluster["title"],
