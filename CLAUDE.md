@@ -131,6 +131,7 @@ output, then write the minimum code to turn it green, then commit.
 - [docs/decisions/003-sqlite-storage.md](docs/decisions/003-sqlite-storage.md) — SQLite для Personal MVP
 - [docs/decisions/004-telethon-channel-reader.md](docs/decisions/004-telethon-channel-reader.md) — Telethon vs Bot API
 - [docs/decisions/005-bot-framework-and-hosting.md](docs/decisions/005-bot-framework-and-hosting.md) — python-telegram-bot + Railway
+- [docs/deployment.md](docs/deployment.md) — local setup + Railway deploy (polling)
 - [docs/constraints.md](docs/constraints.md)
 - [docs/retrospectives/](docs/retrospectives/) ← populated after each feature
 
@@ -146,10 +147,14 @@ cache, and the full digest pipeline (`app/llm/`, `app/digest/`, `app/prompts/dig
 message per channel (linked item titles + optional notes, forced Russian output, via
 `digest_v2.md`/`DigestItem`/`format_channel_digest`), reports per-channel fetch errors inline
 without aborting the run, and acknowledges the command with a 👍 reaction instead of a status
-message. 97/99 tests passing (2 pre-existing `test_config.py` failures, see retro 003). Bot runs
-locally via `python app/main.py` (Telethon session requires one-time `scripts/telethon_login.py`).
-Remaining: Phase 4 polish/deploy (logging table, webhook mode, Dockerfile, Railway). The root
-`app/` Vite/React bootstrap from feature 001 still exists but is not the active product.
+message. Per feature 006 (Phase 4), unexpected errors are persisted to an `errors` table
+(`ErrorRepo`) in addition to console logging, the bot runs polling-only (no webhook —
+`BOT_MODE`/`WEBHOOK_URL` removed, see amended ADR 005), and `digest-bot/Dockerfile` +
+[docs/deployment.md](docs/deployment.md) cover Railway deploy with a persistent `data/`
+volume. 100/102 tests passing (2 pre-existing `test_config.py` failures, see retro 003).
+Bot runs locally via `python app/main.py` (Telethon session requires one-time
+`scripts/telethon_login.py`). All 9 PRD success criteria are met (see feature-006 checklist).
+The root `app/` Vite/React bootstrap from feature 001 still exists but is not the active product.
 
 ---
 
@@ -159,3 +164,4 @@ Remaining: Phase 4 polish/deploy (logging table, webhook mode, Dockerfile, Railw
 - [002-channel-management-and-reader](docs/retrospectives/002-channel-management-and-reader.md) — PR description must say upfront if it bundles spec+test+implementation (don't claim "tests only"); mocked `iter_messages` hid an `offset_date`/`reverse` bug.
 - [003-digest-pipeline](docs/retrospectives/003-digest-pipeline.md) — `asyncio.run()` before `run_polling()` breaks on Python 3.12, use `post_init`; Telethon first-run login needs a manual interactive script; existing `.env` broke 2 `test_config.py` env-deletion tests (follow-up needed).
 - [005-digest-toc-per-channel](docs/retrospectives/005-digest-toc-per-channel.md) — when a prompt asks the LLM for "1+ items", the formatter must still handle an empty list gracefully (don't assume the prompt constraint is enforced); `_format_item` was indexing `urls[0]` unguarded and could crash the whole `/digest` run.
+- [006-phase4-polish-deploy](docs/retrospectives/006-phase4-polish-deploy.md) — re-check early architectural plans (webhook for "deploy") against the actual host's constraints before implementing; Railway is a persistent process, so polling deploys fine and webhook was dropped.
