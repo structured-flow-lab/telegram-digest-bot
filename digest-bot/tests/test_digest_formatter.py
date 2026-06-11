@@ -49,6 +49,26 @@ def test_includes_header_info_and_cluster_content():
     assert '<a href="https://t.me/chan/2">2</a>' in text
 
 
+def test_escapes_html_special_chars_in_cluster_content():
+    result = DigestResult(
+        clusters=[
+            DigestCluster(
+                title="A & B <test>",
+                summary="Summary with <b>bold</b> & special chars",
+                post_urls=["https://t.me/chan/1?a=1&b=2"],
+            )
+        ],
+        llm_result=None,
+    )
+
+    messages = format_digest(result, _header())
+
+    text = messages[0]
+    assert "<b>A &amp; B &lt;test&gt;</b>" in text
+    assert "Summary with &lt;b&gt;bold&lt;/b&gt; &amp; special chars" in text
+    assert 'href="https://t.me/chan/1?a=1&amp;b=2"' in text
+
+
 def test_failed_channels_are_mentioned():
     result = DigestResult(clusters=[], llm_result=None)
 

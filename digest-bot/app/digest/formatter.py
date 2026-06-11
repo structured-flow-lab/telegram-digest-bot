@@ -1,5 +1,6 @@
 """Format a DigestResult into Telegram HTML message(s)."""
 
+import html
 from dataclasses import dataclass, field
 
 from app.digest.summarizer import DigestCluster, DigestResult
@@ -32,10 +33,13 @@ def _format_header(header: DigestHeader) -> str:
 
 
 def _format_cluster(cluster: DigestCluster) -> str:
-    block = f"<b>{cluster.title}</b>\n{cluster.summary}"
+    title = html.escape(cluster.title)
+    summary = html.escape(cluster.summary)
+    block = f"<b>{title}</b>\n{summary}"
     if cluster.post_urls:
         links = " ".join(
-            f'<a href="{url}">{i + 1}</a>' for i, url in enumerate(cluster.post_urls)
+            f'<a href="{html.escape(url, quote=True)}">{i + 1}</a>'
+            for i, url in enumerate(cluster.post_urls)
         )
         block += f"\nИсточники: {links}"
     return block
