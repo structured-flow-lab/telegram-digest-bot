@@ -34,8 +34,8 @@ to read.
 - AC-005: `list_active() -> list[Channel]` returns all channels with `is_active = 1`,
   ordered by `added_at` ascending.
 - AC-006: `count_active() -> int` returns the number of active channels.
-- AC-007: Username normalisation is case-insensitive: `add("VC_RU")` and
-  `remove("vc_ru")` refer to the same channel.
+- AC-007: Username normalisation is case-insensitive: `add("BBCRUSSIAN")` and
+  `remove("bbcrussian")` refer to the same channel.
 
 ### Handlers (app/bot/handlers.py)
 

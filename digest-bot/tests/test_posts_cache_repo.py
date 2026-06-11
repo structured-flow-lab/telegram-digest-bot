@@ -21,7 +21,7 @@ async def conn():
 @pytest.fixture
 async def channel_id(conn):
     repo = ChannelRepo(conn)
-    channel = await repo.add("vc_ru", title="VC.ru")
+    channel = await repo.add("bbcrussian", title="BBC Russian")
     return channel.id
 
 
@@ -35,7 +35,7 @@ def _post(msg_id, text, posted_at):
         telegram_msg_id=msg_id,
         posted_at=posted_at,
         text=text,
-        url=f"https://t.me/vc_ru/{msg_id}",
+        url=f"https://t.me/bbcrussian/{msg_id}",
         views=None,
     )
 

@@ -20,7 +20,7 @@ def ensure_config(monkeypatch):
     sys.modules.pop("app.reader.posts", None)
 
 
-def _make_broadcast_channel(username="vc_ru", title="VC.ru"):
+def _make_broadcast_channel(username="bbcrussian", title="BBC Russian"):
     entity = MagicMock(spec=TLChannel)
     entity.username = username
     entity.title = title
@@ -40,9 +40,9 @@ async def test_validate_channel_returns_channel_info():
     client = MagicMock()
     client.get_entity = AsyncMock(return_value=_make_broadcast_channel())
 
-    info = await validate_channel("vc_ru", client=client)
+    info = await validate_channel("bbcrussian", client=client)
 
-    assert info == ChannelInfo(username="vc_ru", title="VC.ru", is_public=True)
+    assert info == ChannelInfo(username="bbcrussian", title="BBC Russian", is_public=True)
 
 
 async def test_validate_channel_not_found_username_not_occupied():
@@ -126,14 +126,14 @@ async def test_fetch_posts_returns_posts_oldest_to_newest():
 
     client.iter_messages = fake_iter_messages
 
-    posts = await fetch_posts("vc_ru", since=since, limit=100, client=client)
+    posts = await fetch_posts("bbcrussian", since=since, limit=100, client=client)
 
     assert [p.telegram_msg_id for p in posts] == [1, 2, 3]
     assert posts[0] == Post(
         telegram_msg_id=1,
         posted_at=datetime(2026, 6, 1, 12, tzinfo=timezone.utc),
         text="first",
-        url="https://t.me/vc_ru/1",
+        url="https://t.me/bbcrussian/1",
         views=10,
     )
 
@@ -157,7 +157,7 @@ async def test_fetch_posts_skips_empty_text():
 
     client.iter_messages = fake_iter_messages
 
-    posts = await fetch_posts("vc_ru", since=since, limit=100, client=client)
+    posts = await fetch_posts("bbcrussian", since=since, limit=100, client=client)
 
     assert [p.telegram_msg_id for p in posts] == [3]
 
@@ -176,7 +176,7 @@ async def test_fetch_posts_flood_wait_raises_channel_fetch_error():
     client.iter_messages = fake_iter_messages
 
     with pytest.raises(ChannelFetchError):
-        await fetch_posts("vc_ru", since=since, limit=100, client=client)
+        await fetch_posts("bbcrussian", since=since, limit=100, client=client)
 
 
 async def test_fetch_posts_other_error_wrapped():
@@ -193,4 +193,4 @@ async def test_fetch_posts_other_error_wrapped():
     client.iter_messages = fake_iter_messages
 
     with pytest.raises(ChannelFetchError):
-        await fetch_posts("vc_ru", since=since, limit=100, client=client)
+        await fetch_posts("bbcrussian", since=since, limit=100, client=client)

@@ -26,24 +26,24 @@ def repo(conn):
 
 async def test_add_returns_channel_without_leading_at(repo):
     """AC-001."""
-    channel = await repo.add("@vc_ru", title="VC.ru")
-    assert channel.username == "vc_ru"
-    assert channel.title == "VC.ru"
+    channel = await repo.add("@bbcrussian", title="BBC Russian")
+    assert channel.username == "bbcrussian"
+    assert channel.title == "BBC Russian"
     assert channel.id is not None
     assert channel.is_active == 1
 
 
 async def test_add_strips_at_when_absent(repo):
     """AC-001: works the same without a leading @."""
-    channel = await repo.add("vc_ru", title="VC.ru")
-    assert channel.username == "vc_ru"
+    channel = await repo.add("bbcrussian", title="BBC Russian")
+    assert channel.username == "bbcrussian"
 
 
 async def test_add_duplicate_raises(repo):
     """AC-002: duplicate (case-insensitive) raises ChannelAlreadyExists."""
-    await repo.add("vc_ru", title="VC.ru")
+    await repo.add("bbcrussian", title="BBC Russian")
     with pytest.raises(ChannelAlreadyExists):
-        await repo.add("VC_RU", title="VC.ru again")
+        await repo.add("BBCRUSSIAN", title="BBC Russian again")
 
 
 async def test_add_over_limit_raises(repo, monkeypatch):
@@ -61,8 +61,8 @@ async def test_add_over_limit_raises(repo, monkeypatch):
 
 async def test_remove_existing_returns_true(repo):
     """AC-004."""
-    await repo.add("vc_ru", title="VC.ru")
-    assert await repo.remove("vc_ru") is True
+    await repo.add("bbcrussian", title="BBC Russian")
+    assert await repo.remove("bbcrussian") is True
 
 
 async def test_remove_missing_returns_false(repo):
@@ -91,10 +91,10 @@ async def test_count_active(repo):
 
 
 async def test_username_normalisation_is_case_insensitive(repo):
-    """AC-007: add('VC_RU') and remove('vc_ru') refer to the same channel."""
-    await repo.add("VC_RU", title=None)
+    """AC-007: add('BBCRUSSIAN') and remove('bbcrussian') refer to the same channel."""
+    await repo.add("BBCRUSSIAN", title=None)
 
     channels = await repo.list_active()
-    assert channels[0].username == "vc_ru"
+    assert channels[0].username == "bbcrussian"
 
-    assert await repo.remove("vc_ru") is True
+    assert await repo.remove("bbcrussian") is True

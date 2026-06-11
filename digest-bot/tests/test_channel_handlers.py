@@ -67,14 +67,14 @@ def handlers(conn, monkeypatch):
 
 async def test_add_valid_channel(handlers):
     """AC-010: valid new username is added and confirmed."""
-    update = _make_update("/add @vc_ru", ["@vc_ru"])
-    context = _make_context(["@vc_ru"])
+    update = _make_update("/add @bbcrussian", ["@bbcrussian"])
+    context = _make_context(["@bbcrussian"])
 
     await handlers.add_handler(update, context)
 
     update.message.reply_text.assert_awaited_once()
     msg = update.message.reply_text.await_args.args[0]
-    assert "vc_ru" in msg
+    assert "bbcrussian" in msg
 
 
 async def test_add_no_argument(handlers):
@@ -99,14 +99,14 @@ async def test_add_malformed_username(handlers):
 
 async def test_add_duplicate_channel(handlers):
     """AC-012: already-added channel -> CHANNEL_ALREADY_EXISTS."""
-    update1 = _make_update("/add @vc_ru", ["@vc_ru"])
-    await handlers.add_handler(update1, _make_context(["@vc_ru"]))
+    update1 = _make_update("/add @bbcrussian", ["@bbcrussian"])
+    await handlers.add_handler(update1, _make_context(["@bbcrussian"]))
 
-    update2 = _make_update("/add @vc_ru", ["@vc_ru"])
-    await handlers.add_handler(update2, _make_context(["@vc_ru"]))
+    update2 = _make_update("/add @bbcrussian", ["@bbcrussian"])
+    await handlers.add_handler(update2, _make_context(["@bbcrussian"]))
 
     update2.message.reply_text.assert_awaited_once_with(
-        handlers.messages.CHANNEL_ALREADY_EXISTS.format(username="vc_ru")
+        handlers.messages.CHANNEL_ALREADY_EXISTS.format(username="bbcrussian")
     )
 
 
@@ -134,14 +134,14 @@ async def test_add_channel_limit_reached(handlers, monkeypatch):
 
 async def test_remove_existing_channel(handlers):
     """AC-014: existing channel is removed and confirmed."""
-    update1 = _make_update("/add @vc_ru", ["@vc_ru"])
-    await handlers.add_handler(update1, _make_context(["@vc_ru"]))
+    update1 = _make_update("/add @bbcrussian", ["@bbcrussian"])
+    await handlers.add_handler(update1, _make_context(["@bbcrussian"]))
 
-    update2 = _make_update("/remove @vc_ru", ["@vc_ru"])
-    await handlers.remove_handler(update2, _make_context(["@vc_ru"]))
+    update2 = _make_update("/remove @bbcrussian", ["@bbcrussian"])
+    await handlers.remove_handler(update2, _make_context(["@bbcrussian"]))
 
     update2.message.reply_text.assert_awaited_once_with(
-        handlers.messages.CHANNEL_REMOVED.format(username="vc_ru")
+        handlers.messages.CHANNEL_REMOVED.format(username="bbcrussian")
     )
 
 
@@ -169,8 +169,8 @@ async def test_channels_empty(handlers):
 
 async def test_channels_list(handlers):
     """AC-017: lists one @username per line, prefixed by CHANNELS_HEADER."""
-    update1 = _make_update("/add @vc_ru", ["@vc_ru"])
-    await handlers.add_handler(update1, _make_context(["@vc_ru"]))
+    update1 = _make_update("/add @bbcrussian", ["@bbcrussian"])
+    await handlers.add_handler(update1, _make_context(["@bbcrussian"]))
 
     update2 = _make_update("/add @techcrunch", ["@techcrunch"])
     await handlers.add_handler(update2, _make_context(["@techcrunch"]))
@@ -180,7 +180,7 @@ async def test_channels_list(handlers):
 
     msg = update3.message.reply_text.await_args.args[0]
     assert msg.startswith(handlers.messages.CHANNELS_HEADER)
-    assert "@vc_ru" in msg
+    assert "@bbcrussian" in msg
     assert "@techcrunch" in msg
 
 
@@ -189,8 +189,8 @@ async def test_channels_list(handlers):
 # ---------------------------------------------------------------------------
 
 @pytest.mark.parametrize("handler_name,args", [
-    ("add_handler", ["@vc_ru"]),
-    ("remove_handler", ["@vc_ru"]),
+    ("add_handler", ["@bbcrussian"]),
+    ("remove_handler", ["@bbcrussian"]),
     ("channels_handler", []),
 ])
 async def test_handlers_respect_owner_guard(handlers, handler_name, args):
@@ -216,8 +216,8 @@ async def test_add_unexpected_exception_is_caught(handlers, monkeypatch):
 
     monkeypatch.setattr(ChannelRepo, "add", boom)
 
-    update = _make_update("/add @vc_ru", ["@vc_ru"])
-    await handlers.add_handler(update, _make_context(["@vc_ru"]))
+    update = _make_update("/add @bbcrussian", ["@bbcrussian"])
+    await handlers.add_handler(update, _make_context(["@bbcrussian"]))
 
     update.message.reply_text.assert_awaited_once_with(handlers.messages.GENERIC_ERROR)
 
@@ -232,14 +232,14 @@ async def test_add_validates_channel_before_saving(handlers):
 
     with patch(
         "app.bot.handlers.validate_channel",
-        new=AsyncMock(return_value=ChannelInfo(username="vc_ru", title="VC.ru", is_public=True)),
+        new=AsyncMock(return_value=ChannelInfo(username="bbcrussian", title="BBC Russian", is_public=True)),
     ) as mock_validate:
-        update = _make_update("/add @vc_ru", ["@vc_ru"])
-        await handlers.add_handler(update, _make_context(["@vc_ru"]))
+        update = _make_update("/add @bbcrussian", ["@bbcrussian"])
+        await handlers.add_handler(update, _make_context(["@bbcrussian"]))
 
-    mock_validate.assert_awaited_once_with("vc_ru")
+    mock_validate.assert_awaited_once_with("bbcrussian")
     msg = update.message.reply_text.await_args.args[0]
-    assert "vc_ru" in msg
+    assert "bbcrussian" in msg
 
 
 async def test_add_channel_not_found_on_telegram(handlers, conn):
@@ -249,13 +249,13 @@ async def test_add_channel_not_found_on_telegram(handlers, conn):
 
     with patch(
         "app.bot.handlers.validate_channel",
-        new=AsyncMock(side_effect=ChannelNotFound("vc_ru")),
+        new=AsyncMock(side_effect=ChannelNotFound("bbcrussian")),
     ):
-        update = _make_update("/add @vc_ru", ["@vc_ru"])
-        await handlers.add_handler(update, _make_context(["@vc_ru"]))
+        update = _make_update("/add @bbcrussian", ["@bbcrussian"])
+        await handlers.add_handler(update, _make_context(["@bbcrussian"]))
 
     update.message.reply_text.assert_awaited_once_with(
-        handlers.messages.CHANNEL_NOT_FOUND_ON_TELEGRAM.format(username="vc_ru")
+        handlers.messages.CHANNEL_NOT_FOUND_ON_TELEGRAM.format(username="bbcrussian")
     )
 
     repo = ChannelRepo(conn)
@@ -268,13 +268,13 @@ async def test_add_channel_not_public(handlers):
 
     with patch(
         "app.bot.handlers.validate_channel",
-        new=AsyncMock(side_effect=ChannelNotPublic("vc_ru")),
+        new=AsyncMock(side_effect=ChannelNotPublic("bbcrussian")),
     ):
-        update = _make_update("/add @vc_ru", ["@vc_ru"])
-        await handlers.add_handler(update, _make_context(["@vc_ru"]))
+        update = _make_update("/add @bbcrussian", ["@bbcrussian"])
+        await handlers.add_handler(update, _make_context(["@bbcrussian"]))
 
     update.message.reply_text.assert_awaited_once_with(
-        handlers.messages.CHANNEL_NOT_PUBLIC.format(username="vc_ru")
+        handlers.messages.CHANNEL_NOT_PUBLIC.format(username="bbcrussian")
     )
 
 
@@ -285,11 +285,11 @@ async def test_add_stores_title_from_channel_info(handlers, conn):
 
     with patch(
         "app.bot.handlers.validate_channel",
-        new=AsyncMock(return_value=ChannelInfo(username="vc_ru", title="VC.ru", is_public=True)),
+        new=AsyncMock(return_value=ChannelInfo(username="bbcrussian", title="BBC Russian", is_public=True)),
     ):
-        update = _make_update("/add @vc_ru", ["@vc_ru"])
-        await handlers.add_handler(update, _make_context(["@vc_ru"]))
+        update = _make_update("/add @bbcrussian", ["@bbcrussian"])
+        await handlers.add_handler(update, _make_context(["@bbcrussian"]))
 
     repo = ChannelRepo(conn)
     channels = await repo.list_active()
-    assert channels[0].title == "VC.ru"
+    assert channels[0].title == "BBC Russian"
