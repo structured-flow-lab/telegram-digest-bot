@@ -19,16 +19,26 @@ telegram-digest-bot/          ← repo root (git, governance)
     decisions/                ← ADRs (NNN-*.md)
     retrospectives/           ← retros after every feature
     constraints.md
-  app/                        ← ALL Vite + React + TS code lives here
+  app/                        ← legacy Vite + React + TS bootstrap (superseded, see ADR 002-005)
     src/
     vite.config.ts
     vitest.config.ts
     package.json
     ...
+  digest-bot/                 ← Python Telegram bot (the actual product, per ADR 002-005)
+    app/
+      bot/                    ← handlers, message text
+      config.py
+      digest/  llm/  reader/  storage/
+    tests/
+    requirements.txt  dev-requirements.txt  pytest.ini
+    .env.example  data/
 ```
 
-Governance files (`CLAUDE.md`, `README.md`, `docs/**`) live at the repo root — never inside `app/`.
-App code lives inside `app/` — never at the repo root.
+Governance files (`CLAUDE.md`, `README.md`, `docs/**`) live at the repo root — never inside `app/` or `digest-bot/`.
+The product is the Python bot under `digest-bot/` (ADRs 002-005). The root `app/` directory is the
+original Vite/React bootstrap from feature 001-hello-world and is not actively developed; do not
+add new product code there.
 
 ---
 
@@ -78,7 +88,7 @@ Port is recorded in `.dev-port` (defaults 5173). Always read current port from `
 7. Keep `CLAUDE.md`'s "Current state" section updated after every merged change.
 8. Dev server lives at `http://127.0.0.1:<DEV_PORT>/` where `DEV_PORT` is recorded in `.dev-port` (defaults to 5173). Always read the current port from `.dev-port` instead of hardcoding 5173. `strictPort: true` is set so Vite never silently drifts.
 9. **Retrospective after every feature.** Once a feature is green and committed, write `docs/retrospectives/NNN-<slug>.md`. If the retro proposes a change, edit `CLAUDE.md` in the same session. Commit as `chore(retro): NNN-<slug>`.
-10. **Layout discipline.** Governance files live at repo root, never inside `app/`. App code lives inside `app/`, never at repo root.
+10. **Layout discipline.** Governance files live at repo root, never inside `app/` or `digest-bot/`. Python product code lives inside `digest-bot/app/`, never at repo root.
 11. **Conventional Commits.** Format: `<type>(<scope>): <subject>`. Types: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `perf`, `build`, `ci`, `style`.
 12. **CLAUDE.md ≤ ~200 lines.** It is a router, not an encyclopedia. Route detail into linked docs.
 
@@ -128,10 +138,13 @@ output, then write the minimum code to turn it green, then commit.
 
 ## Current state
 
-Hello world greeting rendered; no features specced.
+Phase 0 of the `digest-bot/` Python bot is in place: env-based config, async SQLite migrations
+(`channels`, `posts_cache`, `digest_runs`, `llm_usage`), owner-only access guard, and `/start` +
+`/help` handlers. No Telethon or LLM integration yet. The root `app/` Vite/React bootstrap from
+feature 001 still exists but is not the active product.
 
 ---
 
 ## Self-improvement log
 
-- [001-hello-world](docs/retrospectives/001-hello-world.md) — bootstrap retro; nc shim on Windows, eslint-plugin-react ESLint 10 incompatibility recorded._
+- [001-hello-world](docs/retrospectives/001-hello-world.md) — bootstrap retro; nc shim on Windows, eslint-plugin-react ESLint 10 incompatibility recorded.
