@@ -1,9 +1,4 @@
-"""Data-access repositories — stubs ready for Phase 1+."""
-
-# Populated incrementally:
-#   Phase 1 → ChannelRepo
-#   Phase 2 → PostsCacheRepo
-#   Phase 3 → DigestRunRepo, LLMUsageRepo
+"""Data-access repositories."""
 
 from dataclasses import dataclass
 from datetime import datetime
@@ -167,3 +162,58 @@ class PostsCacheRepo:
             )
             for row in rows
         ]
+
+
+class DigestRunRepo:
+    """Repository for the `digest_runs` table."""
+
+    def __init__(self, conn: aiosqlite.Connection) -> None:
+        self._conn = conn
+
+    async def create(self, days: int, channel_filter: str | None) -> int:
+        cursor = await self._conn.execute(
+            "INSERT INTO digest_runs (days, channel_filter) VALUES (?, ?)",
+            (days, channel_filter),
+        )
+        await self._conn.commit()
+        return cursor.lastrowid
+
+    async def complete(self, run_id: int, posts_fetched: int, posts_included: int) -> None:
+        await self._conn.execute(
+            "UPDATE digest_runs SET status = 'ok', finished_at = datetime('now'), "
+            "posts_fetched = ?, posts_included = ? WHERE id = ?",
+            (posts_fetched, posts_included, run_id),
+        )
+        await self._conn.commit()
+
+    async def fail(self, run_id: int, error_msg: str) -> None:
+        await self._conn.execute(
+            "UPDATE digest_runs SET status = 'error', finished_at = datetime('now'), "
+            "error_msg = ? WHERE id = ?",
+            (error_msg, run_id),
+        )
+        await self._conn.commit()
+
+
+class LLMUsageRepo:
+    """Repository for the `llm_usage` table."""
+
+    def __init__(self, conn: aiosqlite.Connection) -> None:
+        self._conn = conn
+
+    async def record(
+        self,
+        digest_run_id: int,
+        provider: str,
+        model: str,
+        prompt_version: str | None,
+        input_tokens: int,
+        output_tokens: int,
+    ) -> None:
+        await self._conn.execute(
+            "INSERT INTO llm_usage "
+            "(digest_run_id, provider, model, prompt_version, input_tokens, output_tokens) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (digest_run_id, provider, model, prompt_version, input_tokens, output_tokens),
+        )
+        await self._conn.commit()
