@@ -1,4 +1,4 @@
-"""Feature 004 — AC-070 – AC-075 — /digest handler (app/bot/handlers.py)."""
+"""Feature 005 — AC-130 – AC-144 — /digest handler (app/bot/handlers.py)."""
 
 import sys
 from contextlib import asynccontextmanager
@@ -9,9 +9,10 @@ import aiosqlite
 import pytest
 
 from app.digest.collector import CollectResult
-from app.digest.summarizer import DigestCluster, DigestResult
+from app.digest.summarizer import DigestItem, DigestResult
 from app.llm.base import LLMResult
 from app.storage.migrations import run_migrations
+from app.storage.repositories import CachedPost
 
 
 def _make_update(args: list[str], user_id: int = 999):
@@ -76,6 +77,15 @@ async def _add_channel(handlers, conn, username):
     from app.storage.repositories import ChannelRepo
 
     return await ChannelRepo(conn).add(username, title=username)
+
+
+def _post(msg_id, text="x" * 50, posted_at=datetime(2026, 1, 1, tzinfo=timezone.utc)):
+    return CachedPost(
+        telegram_msg_id=msg_id,
+        posted_at=posted_at,
+        text=text,
+        url=f"https://t.me/chan/{msg_id}",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -158,17 +168,17 @@ async def test_valid_request_acknowledges_and_starts_task(handlers, conn):
 
 @pytest.fixture
 def pipeline_mocks(handlers):
-    collected = CollectResult(posts=[], failed_channels=[])
-    digest_result = DigestResult(clusters=[], llm_result=None)
+    empty_collected = CollectResult(posts=[], failed_channels=[])
+    empty_result = DigestResult(items=[], llm_result=None, prompt_version="")
 
-    with patch.object(handlers, "collect_posts", AsyncMock(return_value=collected)) as m_collect, \
+    with patch.object(handlers, "collect_posts", AsyncMock(return_value=empty_collected)) as m_collect, \
          patch.object(handlers, "filter_posts", return_value=[]) as m_filter, \
          patch.object(handlers, "get_llm_client", return_value=AsyncMock()) as m_get_llm, \
-         patch.object(handlers, "summarize", AsyncMock(return_value=digest_result)) as m_summarize, \
-         patch.object(handlers, "format_digest", return_value=["digest message"]) as m_format:
+         patch.object(handlers, "summarize", AsyncMock(return_value=empty_result)) as m_summarize, \
+         patch.object(handlers, "format_channel_digest", return_value=["digest message"]) as m_format:
         yield {
-            "collected": collected,
-            "digest_result": digest_result,
+            "empty_collected": empty_collected,
+            "empty_result": empty_result,
             "collect": m_collect,
             "filter": m_filter,
             "get_llm": m_get_llm,
@@ -186,28 +196,77 @@ async def test_run_digest_success_records_run_and_replies(handlers, conn, pipeli
     update.message.reply_text.assert_awaited_with(
         "digest message", parse_mode=handlers.ParseMode.HTML, disable_web_page_preview=True
     )
+    pipeline_mocks["format"].assert_called_once()
+    assert pipeline_mocks["format"].call_args.args[0] == "knownchan"
 
     rows = await conn.execute_fetchall("SELECT * FROM digest_runs")
     assert rows[0]["status"] == "ok"
     assert rows[0]["posts_included"] == 0
+
+    pipeline_mocks["summarize"].assert_not_called()
+
+
+async def test_run_digest_sends_one_message_set_per_channel(handlers, conn, pipeline_mocks):
+    chan_a = await _add_channel(handlers, conn, "chan_a")
+    chan_b = await _add_channel(handlers, conn, "chan_b")
+    update = _make_update(["7"])
+
+    await handlers._run_digest(update, [chan_a, chan_b], days=7, channel_filter=None)
+
+    assert pipeline_mocks["format"].call_count == 2
+    called_channels = [call.args[0] for call in pipeline_mocks["format"].call_args_list]
+    assert called_channels == ["chan_a", "chan_b"]
+    assert update.message.reply_text.await_count == 2
 
 
 async def test_run_digest_records_llm_usage_when_present(handlers, conn, pipeline_mocks):
     channel = await _add_channel(handlers, conn, "knownchan")
     update = _make_update(["7"])
 
+    posts = [_post(1)]
+    pipeline_mocks["collect"].return_value = CollectResult(posts=posts, failed_channels=[])
+    pipeline_mocks["filter"].return_value = posts
+
     llm_result = LLMResult(text="{}", input_tokens=11, output_tokens=22, model="claude-haiku-4-5")
     pipeline_mocks["summarize"].return_value = DigestResult(
-        clusters=[DigestCluster(title="T", summary="S", post_urls=[])],
+        items=[DigestItem(title="T", note="", post_urls=["https://t.me/chan/1"])],
         llm_result=llm_result,
+        prompt_version="digest_v2",
     )
 
     await handlers._run_digest(update, [channel], days=7, channel_filter=None)
+
+    pipeline_mocks["summarize"].assert_called_once()
 
     rows = await conn.execute_fetchall("SELECT * FROM llm_usage")
     assert len(rows) == 1
     assert rows[0]["input_tokens"] == 11
     assert rows[0]["output_tokens"] == 22
+    assert rows[0]["prompt_version"] == "digest_v2"
+
+
+async def test_run_digest_failed_channel_sends_error_message_and_continues(
+    handlers, conn, pipeline_mocks
+):
+    chan_a = await _add_channel(handlers, conn, "chan_a")
+    chan_b = await _add_channel(handlers, conn, "chan_b")
+    update = _make_update(["7"])
+
+    def collect_side_effect(channels, *args, **kwargs):
+        if channels[0].username == "chan_a":
+            return CollectResult(posts=[], failed_channels=["chan_a"])
+        return CollectResult(posts=[], failed_channels=[])
+
+    pipeline_mocks["collect"].side_effect = collect_side_effect
+
+    await handlers._run_digest(update, [chan_a, chan_b], days=7, channel_filter=None)
+
+    assert pipeline_mocks["format"].call_count == 2
+    first_meta = pipeline_mocks["format"].call_args_list[0].args[2]
+    assert first_meta.error is not None
+
+    rows = await conn.execute_fetchall("SELECT * FROM digest_runs")
+    assert rows[0]["status"] == "ok"
 
 
 async def test_run_digest_failure_marks_run_as_error(handlers, conn, pipeline_mocks):
