@@ -54,6 +54,16 @@ def test_item_without_note_has_no_extra_line():
     assert lines[-1] == '<a href="https://t.me/chan/1"><b>Theme A</b></a>'
 
 
+def test_item_with_no_urls_renders_bold_title_without_link():
+    result = _result([DigestItem(title="Theme A", note="", post_urls=[])])
+
+    messages = format_channel_digest("chan_a", result, _meta())
+
+    text = messages[0]
+    assert "<b>Theme A</b>" in text
+    assert "<a href=" not in text
+
+
 def test_item_with_multiple_urls_renders_extra_numbered_links():
     result = _result(
         [

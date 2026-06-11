@@ -28,7 +28,10 @@ def _format_header(channel: str, meta: ChannelDigestMeta) -> str:
 def _format_item(item: DigestItem) -> str:
     title = html.escape(item.title)
     urls = [html.escape(url, quote=True) for url in item.post_urls]
-    block = f'<a href="{urls[0]}"><b>{title}</b></a>'
+    if urls:
+        block = f'<a href="{urls[0]}"><b>{title}</b></a>'
+    else:
+        block = f"<b>{title}</b>"
     if len(urls) > 1:
         extra = ", ".join(f'<a href="{url}">{i}</a>' for i, url in enumerate(urls[1:], start=2))
         block += f" ({extra})"
