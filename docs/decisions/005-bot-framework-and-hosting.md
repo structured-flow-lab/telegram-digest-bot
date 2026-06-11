@@ -20,15 +20,13 @@
 
 ### Режим работы
 
-- **Локально (разработка):** polling — проще, не нужен публичный URL.
-- **Деплой:** webhook — Railway даёт публичный HTTPS-URL из коробки.
-
-Переключение через конфиг:
-```
-BOT_MODE=polling   # локально
-BOT_MODE=webhook   # Railway
-WEBHOOK_URL=https://<app>.up.railway.app
-```
+**Обновлено в feature-006:** polling — и локально, и на Railway. Railway
+держит процесс постоянно живым (это не serverless), так что polling работает
+там без отличий от локального запуска. Webhook не даёт выигрыша для personal
+MVP и потребовал бы новой зависимости (`python-telegram-bot[webhooks]` →
+`tornado`). `BOT_MODE`/`WEBHOOK_URL` убраны из конфига — `main.py` всегда
+вызывает `run_polling()`. См.
+[feature-006](../requirements/feature-006-phase4-polish-deploy.md).
 
 ### Хостинг: Railway
 

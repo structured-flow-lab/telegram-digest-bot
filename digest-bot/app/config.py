@@ -47,10 +47,6 @@ DB_PATH: str = os.getenv("DB_PATH") or "data/digest_bot.sqlite"
 LLM_PROVIDER: str = os.getenv("LLM_PROVIDER") or "claude"
 LLM_MODEL: str = os.getenv("LLM_MODEL") or "claude-haiku-4-5-20251001"
 
-# --- Bot mode ---
-BOT_MODE: str = os.getenv("BOT_MODE") or "polling"
-WEBHOOK_URL: str = os.getenv("WEBHOOK_URL") or ""
-
 # --- Hard limits ---
 MAX_DAYS: int = 30
 MAX_CHANNELS: int = 20
