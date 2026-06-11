@@ -35,12 +35,14 @@ async def owner_guard(update: Update, context: ContextTypes.DEFAULT_TYPE) -> boo
 async def start_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not await owner_guard(update, context):
         return
-    assert update.message is not None
+    if update.message is None:
+        return
     await update.message.reply_text(messages.START)
 
 
 async def help_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not await owner_guard(update, context):
         return
-    assert update.message is not None
+    if update.message is None:
+        return
     await update.message.reply_text(messages.HELP, parse_mode=ParseMode.HTML)

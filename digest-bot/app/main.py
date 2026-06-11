@@ -44,6 +44,7 @@ def main() -> None:
     application.add_handler(CommandHandler("help", help_handler))
 
     logger.info("Starting bot in polling mode (owner_id=%d)", config.OWNER_TELEGRAM_ID)
+    # Drop updates queued while the bot was offline rather than replaying them on restart.
     application.run_polling(drop_pending_updates=True)
 
 

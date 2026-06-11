@@ -13,11 +13,29 @@ def _require(name: str) -> str:
     return value
 
 
+def _require_int(name: str) -> int:
+    value = _require(name)
+    try:
+        return int(value)
+    except ValueError:
+        raise RuntimeError(f"Environment variable {name!r} must be an integer, got {value!r}")
+
+
+def _optional_int(name: str, default: int = 0) -> int:
+    value = os.getenv(name)
+    if not value:
+        return default
+    try:
+        return int(value)
+    except ValueError:
+        raise RuntimeError(f"Environment variable {name!r} must be an integer, got {value!r}")
+
+
 # --- Telegram ---
 TELEGRAM_BOT_TOKEN: str = _require("TELEGRAM_BOT_TOKEN")
-TELEGRAM_API_ID: int = int(os.getenv("TELEGRAM_API_ID") or "0")
+TELEGRAM_API_ID: int = _optional_int("TELEGRAM_API_ID")
 TELEGRAM_API_HASH: str = os.getenv("TELEGRAM_API_HASH") or ""
-OWNER_TELEGRAM_ID: int = int(_require("OWNER_TELEGRAM_ID"))
+OWNER_TELEGRAM_ID: int = _require_int("OWNER_TELEGRAM_ID")
 
 # --- Anthropic ---
 ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY") or ""
