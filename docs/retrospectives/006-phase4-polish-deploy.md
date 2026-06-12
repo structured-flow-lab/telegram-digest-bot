@@ -34,15 +34,17 @@ Personal MVP per `docs/PRD.md` — all 9 success criteria verified in
   chosen host before implementing — "deploy = webhook" was an unexamined
   assumption, not a requirement.
 
-## Follow-ups (not done now)
+## Follow-ups
 
-- `tests/test_config.py` env-var-deletion failures remain (see retro 003,
-  still unfixed — third feature in a row to note this; worth fixing soon so
-  CI is fully green).
-- No actual Railway deployment was performed in this session — the project
-  owner needs to create a Railway account and follow
-  `docs/deployment.md` themselves; Dockerfile/docs are untested against a
-  real Railway build.
+- ~~`tests/test_config.py` env-var-deletion failures~~ — fixed: the tests now
+  stub `dotenv.load_dotenv` before re-importing `app.config`, so the local
+  `.env` can no longer refill a var the test just deleted. 102/102 tests pass.
+- ~~No actual Railway deployment was performed~~ — done: deployed to project
+  `just-recreation` / service `telegram-digest-bot` on Railway, with a
+  persistent volume at `/app/data`. The local `data/telethon.session` was
+  uploaded via `railway ssh` (after `railway ssh config` + `ssh-keyscan
+  ssh.railway.com` to fix host-key verification on Windows). Bot is online
+  and responding.
 - Docker build was not verified locally (Docker not available in this
-  environment) — worth a smoke build (`docker build .`) before relying on it
-  for deploy.
+  environment), but the Railway build succeeded, which is the build that
+  matters.

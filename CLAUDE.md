@@ -151,9 +151,13 @@ message. Per feature 006 (Phase 4), unexpected errors are persisted to an `error
 (`ErrorRepo`) in addition to console logging, the bot runs polling-only (no webhook —
 `BOT_MODE`/`WEBHOOK_URL` removed, see amended ADR 005), and `digest-bot/Dockerfile` +
 [docs/deployment.md](docs/deployment.md) cover Railway deploy with a persistent `data/`
-volume. 100/102 tests passing (2 pre-existing `test_config.py` failures, see retro 003).
+volume. 102/102 tests passing (the 2 `test_config.py` failures from retro 003 are fixed —
+those tests now stub `dotenv.load_dotenv` so the local `.env` can't mask deleted env vars).
 Bot runs locally via `python app/main.py` (Telethon session requires one-time
-`scripts/telethon_login.py`). All 9 PRD success criteria are met (see feature-006 checklist).
+`scripts/telethon_login.py`) **and is deployed and running on Railway** (project
+`just-recreation`, service `telegram-digest-bot`, persistent volume at `/app/data` holding
+the SQLite DB and `telethon.session`). All 9 PRD success criteria are met (see feature-006
+checklist) — the Personal MVP from `docs/PRD.md` is complete.
 The root `app/` Vite/React bootstrap from feature 001 still exists but is not the active product.
 
 ---
@@ -164,4 +168,4 @@ The root `app/` Vite/React bootstrap from feature 001 still exists but is not th
 - [002-channel-management-and-reader](docs/retrospectives/002-channel-management-and-reader.md) — PR description must say upfront if it bundles spec+test+implementation (don't claim "tests only"); mocked `iter_messages` hid an `offset_date`/`reverse` bug.
 - [003-digest-pipeline](docs/retrospectives/003-digest-pipeline.md) — `asyncio.run()` before `run_polling()` breaks on Python 3.12, use `post_init`; Telethon first-run login needs a manual interactive script; existing `.env` broke 2 `test_config.py` env-deletion tests (follow-up needed).
 - [005-digest-toc-per-channel](docs/retrospectives/005-digest-toc-per-channel.md) — when a prompt asks the LLM for "1+ items", the formatter must still handle an empty list gracefully (don't assume the prompt constraint is enforced); `_format_item` was indexing `urls[0]` unguarded and could crash the whole `/digest` run.
-- [006-phase4-polish-deploy](docs/retrospectives/006-phase4-polish-deploy.md) — re-check early architectural plans (webhook for "deploy") against the actual host's constraints before implementing; Railway is a persistent process, so polling deploys fine and webhook was dropped.
+- [006-phase4-polish-deploy](docs/retrospectives/006-phase4-polish-deploy.md) — re-check early architectural plans (webhook for "deploy") against the actual host's constraints before implementing; Railway is a persistent process, so polling deploys fine and webhook was dropped. Follow-ups closed: `test_config.py` fixed by stubbing `dotenv.load_dotenv` in tests; bot deployed live to Railway with `telethon.session` uploaded via `railway ssh` (needed `railway ssh config` + `ssh-keyscan ssh.railway.com` on Windows for host-key verification).

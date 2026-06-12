@@ -27,6 +27,9 @@ def _reload_config(env: dict):
 
 def test_raises_without_bot_token(monkeypatch):
     """AC-001: missing TELEGRAM_BOT_TOKEN raises RuntimeError."""
+    # config.py calls load_dotenv() on import, which would otherwise refill
+    # TELEGRAM_BOT_TOKEN from digest-bot/.env and mask the missing-var case.
+    monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: None)
     monkeypatch.delenv("TELEGRAM_BOT_TOKEN", raising=False)
     monkeypatch.setenv("OWNER_TELEGRAM_ID", "123")
     sys.modules.pop("app.config", None)
@@ -37,6 +40,7 @@ def test_raises_without_bot_token(monkeypatch):
 
 def test_raises_without_owner_id(monkeypatch):
     """AC-002: missing OWNER_TELEGRAM_ID raises RuntimeError."""
+    monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: None)
     monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "fake:token")
     monkeypatch.delenv("OWNER_TELEGRAM_ID", raising=False)
     sys.modules.pop("app.config", None)
