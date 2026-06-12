@@ -5,6 +5,13 @@ The bot runs in **polling mode** everywhere (local and Railway) — see
 [ADR 005](decisions/005-bot-framework-and-hosting.md). No public HTTPS
 endpoint is needed.
 
+> **Railway risk note:** Railway's Fair Use Policy lists "Mirrors/Userbots"
+> as not allowed, and the Telethon client here logs in as a real user
+> account to read channels — formally a "userbot", even though it's
+> read-only for a personal digest. Accepted risk for now; if Railway bans
+> the account, the same `Dockerfile` runs unchanged on a VPS (Hetzner,
+> DigitalOcean — see ADR 005 alternatives table).
+
 ## Local setup
 
 1. `cd digest-bot`
